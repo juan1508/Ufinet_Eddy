@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 # ─────────────────────────────────────────────
 st.set_page_config(
     page_title="Ufinet | Monitor de Incidencias",
-    page_icon="🔴",
+    page_icon="🏢",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -30,16 +30,16 @@ html, body, [class*="css"] {
 
 /* Sidebar */
 [data-testid="stSidebar"] {
-    background: #1A1A1A !important;
+    background: #faf5f5 !important;
     border-right: 3px solid #E30613;
 }
 [data-testid="stSidebar"] * {
-    color: #FFFFFF !important;
+    color: ##0d0c0c !important;
 }
 [data-testid="stSidebar"] .stSelectbox label,
 [data-testid="stSidebar"] .stMultiSelect label,
 [data-testid="stSidebar"] h1, h2, h3 {
-    color: #FFFFFF !important;
+    color: ##0d0c0c !important;
 }
 
 /* Top header */
@@ -47,7 +47,7 @@ html, body, [class*="css"] {
     background: linear-gradient(135deg, #1A1A1A 0%, #2d2d2d 100%);
     padding: 18px 28px;
     border-radius: 10px;
-    border-left: 6px solid #E30613;
+    border-left: 6px solid #0057A8;
     margin-bottom: 24px;
     display: flex;
     align-items: center;
@@ -57,28 +57,28 @@ html, body, [class*="css"] {
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 2.2rem;
     font-weight: 900;
-    color: #FFFFFF;
+    color: #0a0a0a;
     margin: 0;
     letter-spacing: 1px;
     text-transform: uppercase;
 }
 .ufinet-header span {
-    color: #E30613;
+    color: #003087;
 }
 
 /* KPI Cards */
 .kpi-card {
-    background: #1A1A1A;
+    background: #0a0a0a;
     border-radius: 10px;
     padding: 20px;
-    border-top: 4px solid #E30613;
+    border-top: 4px solid #003087;
     text-align: center;
 }
 .kpi-value {
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 2.8rem;
     font-weight: 900;
-    color: #E30613;
+    color: #003087;
 }
 .kpi-label {
     font-size: 0.85rem;
@@ -99,7 +99,7 @@ html, body, [class*="css"] {
     font-size: 1.4rem;
     font-weight: 800;
     text-transform: uppercase;
-    color: #E30613;
+    color: #003087;
     letter-spacing: 1px;
     border-bottom: 2px solid #E30613;
     padding-bottom: 6px;
@@ -108,12 +108,12 @@ html, body, [class*="css"] {
 
 /* Dataframe fix */
 .dataframe th {
-    background: #1A1A1A !important;
-    color: #E30613 !important;
+    background: #f7f2f2 !important;
+    color: #003087 !important;
 }
 
 div[data-testid="stMetricValue"] {
-    color: #E30613 !important;
+    color: #003087 !important;
     font-family: 'Barlow Condensed', sans-serif !important;
     font-size: 2rem !important;
     font-weight: 900 !important;
@@ -128,7 +128,7 @@ st.markdown(UFINET_CSS, unsafe_allow_html=True)
 st.markdown("""
 <div class="ufinet-header">
     <div>
-        <h1>🔴 Ufinet <span>|</span> Monitor de Incidencias</h1>
+        <h1>🔷 Ufinet <span>|</span> Monitor de Incidencias</h1>
         <p style="color:#aaa; margin:0; font-size:0.9rem;">Dashboard de Reincidencias · MTBF · Disponibilidad · Cono Sur</p>
     </div>
 </div>
