@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 # ─────────────────────────────────────────────
 st.set_page_config(
     page_title="Ufinet | Monitor de Incidencias",
-    page_icon="🏢",
+    page_icon="🔴",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -177,12 +177,15 @@ def load_from_gsheet(sheet_url: str, sheet_name: str = None):
     try:
         creds_dict = dict(st.secrets["gcp_service_account"])
 
-        # Fix private_key: normaliza saltos de línea
+        # Fix private_key: normaliza saltos de linea
         if "private_key" in creds_dict:
             pk = creds_dict["private_key"]
             pk = pk.replace(chr(13)+chr(10), chr(10)).replace(chr(13), chr(10))
-            if chr(10) in pk and r"\n" not in pk:
-                pk = pk.replace(chr(10), r"\n")
+            if chr(10) in pk:
+                backslash_n = chr(92) + chr(110)
+                if backslash_n not in pk:
+                    lines = pk.split(chr(10))
+                    pk = backslash_n.join(lines)
             creds_dict["private_key"] = pk
 
         scopes = [
@@ -252,8 +255,8 @@ def load_from_gsheet(sheet_url: str, sheet_name: str = None):
         # Detectar causas comunes
         if "invalid_grant" in msg or "invalid_grant" in tb:
             return None, "❌ Credenciales inválidas (invalid_grant). Regenera la clave en Google Cloud Console."
-        if "DECODER" in tb or "RSA" in tb or "key" in tb.lower():
-            return None, "❌ Error en private_key. El formato es incorrecto — verifica que tenga BEGIN/END RSA PRIVATE KEY."
+        if "DECODER" in tb or "RSA" in tb or "key" in tb.lower() or "PRIVATE KEY" in tb:
+            return None, f"❌ Error en private_key: {cause}: {msg[:150]}"
         if "403" in msg or "Permission" in msg:
             return None, "❌ Sin permiso (403). Comparte el Sheet con: ufinet-streamlit@ufinet-487919.iam.gserviceaccount.com"
         if "404" in msg:
