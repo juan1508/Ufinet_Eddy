@@ -177,15 +177,12 @@ def load_from_gsheet(sheet_url: str, sheet_name: str = None):
     try:
         creds_dict = dict(st.secrets["gcp_service_account"])
 
-        # Fix private_key: normaliza saltos de linea
+        # Fix private_key: convertir \n literales a saltos de linea reales
         if "private_key" in creds_dict:
             pk = creds_dict["private_key"]
-            pk = pk.replace(chr(13)+chr(10), chr(10)).replace(chr(13), chr(10))
-            if chr(10) in pk:
-                backslash_n = chr(92) + chr(110)
-                if backslash_n not in pk:
-                    lines = pk.split(chr(10))
-                    pk = backslash_n.join(lines)
+            backslash_n = chr(92) + chr(110)
+            if backslash_n in pk:
+                pk = pk.replace(backslash_n, chr(10))
             creds_dict["private_key"] = pk
 
         scopes = [
