@@ -30,7 +30,7 @@ html, body, [class*="css"] {
 
 /* Sidebar */
 [data-testid="stSidebar"] {
-    background: #faf5f5 !important;
+    background: #1a1a1a !important;
     border-right: 3px solid #E30613;
 }
 [data-testid="stSidebar"] * {
