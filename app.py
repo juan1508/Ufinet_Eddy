@@ -284,12 +284,16 @@ with st.sidebar:
 # ─────────────────────────────────────────────
 # LOAD SAMPLE DATA IF NOTHING LOADED
 # ─────────────────────────────────────────────
-if df_raw is None and load_error is None:
+if load_error:
+    st.error(f"❌ Error al cargar datos: {load_error}")
+    st.stop()
+
+if df_raw is None:
     st.info("👆 Sube un archivo Excel o conecta Google Sheets en el panel lateral para comenzar.", icon="ℹ️")
     st.stop()
 
-if load_error:
-    st.error(f"❌ Error al cargar datos: {load_error}")
+if not isinstance(df_raw, pd.DataFrame) or df_raw.empty:
+    st.warning("⚠️ El archivo cargado está vacío o no tiene el formato esperado.")
     st.stop()
 
 df = standardize_df(df_raw.copy())
