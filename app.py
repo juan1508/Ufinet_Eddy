@@ -183,12 +183,59 @@ def load_from_gsheet(sheet_url: str, sheet_name: str = None):
         creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
         client = gspread.authorize(creds)
         sh = client.open_by_url(sheet_url)
-        ws = sh.worksheet(sheet_name) if sheet_name else sh.get_worksheet(0)
-        data = ws.get_all_records()
-        df = pd.DataFrame(data)
+
+        # Seleccionar hoja: por nombre si se dio, si no la primera con datos
+        if sheet_name:
+            ws = sh.worksheet(sheet_name)
+        else:
+            # Intentar la primera hoja que tenga datos
+            worksheets = sh.worksheets()
+            ws = None
+            for w in worksheets:
+                if w.row_count > 1:
+                    ws = w
+                    break
+            if ws is None:
+                ws = sh.get_worksheet(0)
+
+        # Usar get_all_values para evitar errores con celdas vacías o headers duplicados
+        all_values = ws.get_all_values()
+        if not all_values or len(all_values) < 2:
+            return None, "La hoja está vacía o no tiene datos."
+
+        headers = all_values[0]
+        rows = all_values[1:]
+
+        # Limpiar headers duplicados o vacíos
+        seen = {}
+        clean_headers = []
+        for h in headers:
+            h = h.strip() if h else "sin_nombre"
+            if h in seen:
+                seen[h] += 1
+                h = f"{h}_{seen[h]}"
+            else:
+                seen[h] = 0
+            clean_headers.append(h)
+
+        df = pd.DataFrame(rows, columns=clean_headers)
+
+        # Eliminar filas completamente vacías
+        df = df.replace("", pd.NA).dropna(how="all").reset_index(drop=True)
+
+        if df.empty:
+            return None, "La hoja no tiene filas con datos."
+
         return df, None
+
+    except gspread.exceptions.SpreadsheetNotFound:
+        return None, "No se encontró el Google Sheet. Verifica que compartiste el archivo con la cuenta de servicio."
+    except gspread.exceptions.APIError as e:
+        return None, f"Error de API Google Sheets: {str(e)}"
+    except KeyError:
+        return None, "No se encontraron credenciales en secrets.toml. Configura [gcp_service_account]."
     except Exception as e:
-        return None, str(e)
+        return None, f"Error inesperado: {str(e)}"
 
 
 @st.cache_data(ttl=300)
@@ -263,7 +310,13 @@ with st.sidebar:
             placeholder="https://docs.google.com/spreadsheets/d/...",
             key="sheet_url_input",
         )
-        sheet_tab = st.text_input("Nombre de pestaña (opcional)", "", key="sheet_tab_input")
+        sheet_tab = st.text_input(
+            "Nombre de pestaña (exacto, opcional)",
+            "",
+            key="sheet_tab_input",
+            help='Si tienes varias pestañas, escribe el nombre exacto. Ej: "Tickets Cerrados Cono SUR"'
+        )
+        st.caption("💡 Si no pones nombre, se carga la primera pestaña con datos automáticamente.")
 
         col_btn, col_clear = st.columns([2, 1])
         with col_btn:
