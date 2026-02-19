@@ -176,6 +176,15 @@ def load_from_gsheet(sheet_url: str, sheet_name: str = None):
     """Load data from Google Sheets using service account credentials stored in st.secrets."""
     try:
         creds_dict = dict(st.secrets["gcp_service_account"])
+
+        # Fix private_key: normaliza saltos de línea
+        if "private_key" in creds_dict:
+            pk = creds_dict["private_key"]
+            pk = pk.replace(chr(13)+chr(10), chr(10)).replace(chr(13), chr(10))
+            if chr(10) in pk and r"\n" not in pk:
+                pk = pk.replace(chr(10), r"\n")
+            creds_dict["private_key"] = pk
+
         scopes = [
             "https://www.googleapis.com/auth/spreadsheets.readonly",
             "https://www.googleapis.com/auth/drive.readonly",
@@ -229,13 +238,27 @@ def load_from_gsheet(sheet_url: str, sheet_name: str = None):
         return df, None
 
     except gspread.exceptions.SpreadsheetNotFound:
-        return None, "No se encontró el Google Sheet. Verifica que compartiste el archivo con la cuenta de servicio."
+        return None, "❌ Sheet no encontrado. Comparte el archivo con: ufinet-streamlit@ufinet-487919.iam.gserviceaccount.com"
     except gspread.exceptions.APIError as e:
-        return None, f"Error de API Google Sheets: {str(e)}"
-    except KeyError:
-        return None, "No se encontraron credenciales en secrets.toml. Configura [gcp_service_account]."
+        return None, f"❌ Error API Google: {str(e)}"
+    except KeyError as e:
+        return None, f"❌ Falta campo en secrets.toml: {str(e)}. Verifica que tienes [gcp_service_account] con todos los campos."
     except Exception as e:
-        return None, f"Error inesperado: {str(e)}"
+        import traceback
+        tb = traceback.format_exc()
+        # Mostrar causa real sin exponer datos sensibles
+        cause = type(e).__name__
+        msg = str(e)[:200] if str(e) else "sin mensaje"
+        # Detectar causas comunes
+        if "invalid_grant" in msg or "invalid_grant" in tb:
+            return None, "❌ Credenciales inválidas (invalid_grant). Regenera la clave en Google Cloud Console."
+        if "DECODER" in tb or "RSA" in tb or "key" in tb.lower():
+            return None, "❌ Error en private_key. El formato es incorrecto — verifica que tenga BEGIN/END RSA PRIVATE KEY."
+        if "403" in msg or "Permission" in msg:
+            return None, "❌ Sin permiso (403). Comparte el Sheet con: ufinet-streamlit@ufinet-487919.iam.gserviceaccount.com"
+        if "404" in msg:
+            return None, "❌ Sheet no encontrado (404). Verifica la URL."
+        return None, f"❌ {cause}: {msg}"
 
 
 @st.cache_data(ttl=300)
