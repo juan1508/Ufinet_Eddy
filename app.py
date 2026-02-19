@@ -235,6 +235,16 @@ def standardize_df(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ─────────────────────────────────────────────
+# SESSION STATE INIT
+# ─────────────────────────────────────────────
+if "df_raw" not in st.session_state:
+    st.session_state.df_raw = None
+if "load_error" not in st.session_state:
+    st.session_state.load_error = None
+if "sheet_url_loaded" not in st.session_state:
+    st.session_state.sheet_url_loaded = ""
+
+# ─────────────────────────────────────────────
 # SIDEBAR – DATA SOURCE
 # ─────────────────────────────────────────────
 with st.sidebar:
@@ -247,29 +257,67 @@ with st.sidebar:
         index=0,
     )
 
-    df_raw = None
-    load_error = None
-
     if data_source == "🌐 Google Sheets":
         sheet_url = st.text_input(
             "URL de Google Sheets",
             placeholder="https://docs.google.com/spreadsheets/d/...",
+            key="sheet_url_input",
         )
-        sheet_tab = st.text_input("Nombre de pestaña (opcional)", "")
-        if st.button("🔄 Cargar datos", type="primary") and sheet_url:
-            with st.spinner("Conectando con Google Sheets..."):
-                df_raw, load_error = load_from_gsheet(
-                    sheet_url, sheet_tab if sheet_tab else None
-                )
+        sheet_tab = st.text_input("Nombre de pestaña (opcional)", "", key="sheet_tab_input")
+
+        col_btn, col_clear = st.columns([2, 1])
+        with col_btn:
+            cargar = st.button("🔄 Cargar datos", type="primary", use_container_width=True)
+        with col_clear:
+            if st.button("🗑️", use_container_width=True, help="Limpiar datos"):
+                st.session_state.df_raw = None
+                st.session_state.load_error = None
+                st.session_state.sheet_url_loaded = ""
+                st.rerun()
+
+        if cargar:
+            if not sheet_url:
+                st.warning("⚠️ Pega la URL del Google Sheet primero.")
+            else:
+                with st.spinner("Conectando con Google Sheets..."):
+                    df_tmp, err_tmp = load_from_gsheet(
+                        sheet_url, sheet_tab if sheet_tab else None
+                    )
+                if err_tmp:
+                    st.session_state.load_error = err_tmp
+                    st.session_state.df_raw = None
+                elif df_tmp is not None and not df_tmp.empty:
+                    st.session_state.df_raw = df_tmp
+                    st.session_state.load_error = None
+                    st.session_state.sheet_url_loaded = sheet_url
+                    st.success(f"✅ {len(df_tmp):,} filas cargadas")
+                else:
+                    st.session_state.load_error = "La hoja está vacía o no tiene datos."
+
+        # Status indicator
+        if st.session_state.sheet_url_loaded:
+            st.markdown(f"🟢 **Conectado** — `{st.session_state.sheet_url_loaded[:40]}...`")
+        elif st.session_state.load_error:
+            st.markdown(f"🔴 **Error:** {st.session_state.load_error[:80]}")
+
         st.markdown("---")
         st.markdown(
-            "**Nota:** Configura tus credenciales de servicio en `.streamlit/secrets.toml` "
-            "bajo la clave `[gcp_service_account]`."
+            "**Nota:** Configura tus credenciales en `.streamlit/secrets.toml` "
+            "bajo `[gcp_service_account]`."
         )
     else:
         uploaded = st.file_uploader("Sube tu archivo Excel (.xlsx)", type=["xlsx", "xls"])
         if uploaded:
-            df_raw, load_error = load_from_upload(uploaded)
+            df_tmp, err_tmp = load_from_upload(uploaded)
+            if err_tmp:
+                st.session_state.load_error = err_tmp
+                st.session_state.df_raw = None
+            else:
+                st.session_state.df_raw = df_tmp
+                st.session_state.load_error = None
+        # Clear gsheet state when switching to Excel
+        if st.session_state.sheet_url_loaded:
+            st.session_state.sheet_url_loaded = ""
 
     st.markdown("---")
     st.markdown("### 🗓️ Filtros globales")
@@ -279,6 +327,10 @@ with st.sidebar:
     filter_cliente = []
     filter_fecha_start = None
     filter_fecha_end = None
+
+# Read from session state
+df_raw = st.session_state.df_raw
+load_error = st.session_state.load_error
 
 
 # ─────────────────────────────────────────────
