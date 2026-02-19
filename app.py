@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 # ─────────────────────────────────────────────
 st.set_page_config(
     page_title="Ufinet | Monitor de Incidencias",
-    page_icon="🏢",
+    page_icon="🔴",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -117,6 +117,40 @@ div[data-testid="stMetricValue"] {
     font-family: 'Barlow Condensed', sans-serif !important;
     font-size: 2rem !important;
     font-weight: 900 !important;
+}
+
+/* ── Multiselect tags: quitar rojo, poner azul ── */
+span[data-baseweb="tag"] {
+    background-color: #0057A8 !important;
+    border-color: #003087 !important;
+}
+span[data-baseweb="tag"] span {
+    color: #FFFFFF !important;
+}
+/* X button dentro del tag */
+span[data-baseweb="tag"] svg {
+    fill: #FFFFFF !important;
+}
+/* Botón "clear all" (X grande circular) */
+div[data-baseweb="select"] svg {
+    color: #0057A8 !important;
+    fill: #0057A8 !important;
+}
+
+/* ── Tab activo: línea azul en vez de roja ── */
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #0057A8 !important;
+    border-bottom-color: #0057A8 !important;
+}
+div[data-testid="stTabs"] button[aria-selected="true"] {
+    border-bottom: 3px solid #0057A8 !important;
+    color: #0057A8 !important;
+}
+
+/* Hover en tabs */
+div[data-testid="stTabs"] button:hover {
+    color: #00AEEF !important;
+    border-bottom: 3px solid #00AEEF !important;
 }
 </style>
 """
