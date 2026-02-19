@@ -108,7 +108,7 @@ html, body, [class*="css"] {
 
 /* Dataframe fix */
 .dataframe th {
-    background: #f7f2f2 !important;
+    background: #1a1a1a !important;
     color: #003087 !important;
 }
 
